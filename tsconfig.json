@@ -1,5 +1,4 @@
 {
-	"extends": "@abhijithvijayan/tsconfig",
 	"compilerOptions": {
 		"target": "es5", // ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'.
 		"module": "esnext", // Module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'.
@@ -8,14 +7,40 @@
 			"dom.iterable",
 			"esnext"
 		],
+		"jsx": "react",
 		"declaration": false,
 		"isolatedModules": true,
 		/* Additional Checks */
 		"useDefineForClassFields": true,
 		"skipLibCheck": true,
+			/* Basic Options */
+		"noEmitOnError": true, // Do not emit outputs if any errors were reported.
+		"newLine": "lf", // Use the specified EOF sequence to be used when emitting files: lf -> unix
+		"removeComments": true, // Do not emit comments to output.
+		// "outDir": "dist", // Redirect output structure to the directory.
+		// "allowJs": true, // Allow JavaScript files to be compiled.
+		// "skipLibCheck": true, // Skip type checking of all declaration files (*.d.ts).
+
+		/* Experimental Options */
+		"experimentalDecorators": true, // Enables experimental support for ES7 decorators.
+		"emitDecoratorMetadata": true, // Enables experimental support for emitting type metadata for decorators.
+
+		/* Module Resolution Options */
+		"moduleResolution": "node", // Module resolution strategy
+		"allowSyntheticDefaultImports": true, // Allow default imports from modules with no default export.
+		"resolveJsonModule": true, // Allow importing, extracting types from and generating .json files.
+		"esModuleInterop": true, // Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports.
+		// "types": [], // Type declaration files to be included in compilation.
+
+		/* Strict Type-Checking Options */
+		"strict": true, // Enable all strict type-checking options.
 	},
 	"include": [
 		"source",
 		"webpack.config.js"
+	],
+	/* Visit https://aka.ms/tsconfig.json to read more about this file */
+	"exclude": [
+		"node_modules"
 	]
 }
