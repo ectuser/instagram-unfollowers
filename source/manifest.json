@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "Sample WebExtension",
-  "version": "0.0.0",
+  "name": "Instagram unfollowers",
+  "version": "0.0.1",
 
   "icons": {
     "16": "assets/icons/favicon-16.png",
@@ -9,9 +9,9 @@
     "48": "assets/icons/favicon-48.png",
     "128": "assets/icons/favicon-128.png"
   },
-  "description": "Sample description",
-  "homepage_url": "https://github.com/abhijithvijayan/web-extension-starter",
-  "short_name": "Sample Name",
+  "description": "",
+  "homepage_url": "https://github.com/ectuser/instagram-unfollowers",
+  "short_name": "Instagram unfollowers",
 
   "permissions": [
     "activeTab",
@@ -22,15 +22,9 @@
 
   "content_security_policy": "script-src 'self'; object-src 'self'",
 
-  "__chrome|firefox__author": "abhijithvijayan",
+  "__chrome|firefox__author": "ectuser",
   "__opera__developer": {
-    "name": "abhijithvijayan"
-  },
-
-  "__firefox__applications": {
-    "gecko": {
-      "id": "{754FB1AD-CC3B-4856-B6A0-7786F8CA9D17}"
-    }
+    "name": "ectuser"
   },
 
   "__chrome__minimum_chrome_version": "49",

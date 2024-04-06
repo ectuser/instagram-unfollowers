@@ -151,7 +151,6 @@ export function Unfollowers() {
           <th></th>
           <th>Username</th>
           <th>Name</th>
-          <th>Link</th>
         </tr> 
       </thead>
       <tbody>
@@ -160,16 +159,15 @@ export function Unfollowers() {
             <td>
               {images[virtualRow.index] 
                 ? <span>
-                  <img src={URL.createObjectURL(images[virtualRow.index]!)} alt={users[virtualRow.index].username} width="500" height="500" /> 
+                  <img style={{maxWidth: 'none', width: 50, height: 50}} src={URL.createObjectURL(images[virtualRow.index]!)} alt={users[virtualRow.index].username}/> 
                 </span>
                 : null
               }
             </td>
-            <td>{users[virtualRow.index].username}</td>
-            <td>{users[virtualRow.index].name}</td>
             <td>
-              <a onClick={() => profileClicked(users[virtualRow.index].link)} href='#'>Profile</a>
+              <a onClick={() => profileClicked(users[virtualRow.index].link)} href='#'>{users[virtualRow.index].username}</a>
             </td>
+            <td>{users[virtualRow.index].name}</td>
           </tr>
         )}
       </tbody>
