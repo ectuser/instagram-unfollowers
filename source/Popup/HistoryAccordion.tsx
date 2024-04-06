@@ -3,17 +3,11 @@ import * as React from 'react';
 import { UserHistory, UsersHistory } from './Followers';
 
 export function HistoryAccordion(props: {history: UsersHistory}) {
-  const [open, setOpen] = React.useState(false);
-
   const historyDate = new Date(props.history.dt).toLocaleString();
 
-  return <div>
-    <button style={{width: '100%', display: 'flex', justifyContent: 'space-between'}} className='outline secondary' onClick={() => setOpen(val => !val)}>
-      <span>{historyDate}</span>
-      <span>{open ? '-' : '+'}</span>
-    </button>
-    {open 
-    ? <>
+  return <details>
+    <summary role="button" className="outline">{historyDate}</summary>
+    <div>
       <div>
         <h3>Added followers:</h3>
         {props.history.plus.length ? <UsersTable users={props.history.plus} /> : null}
@@ -22,9 +16,8 @@ export function HistoryAccordion(props: {history: UsersHistory}) {
         <h3>Unsubscribed followers:</h3>
         {props.history.minus.length ? <UsersTable users={props.history.minus} /> : null}
       </div>
-    </>
-    : null}
-  </div>;
+    </div>
+  </details>;
 }
 
 function UsersTable(props: {users: UserHistory[]}) {

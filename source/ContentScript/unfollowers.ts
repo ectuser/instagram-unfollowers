@@ -1,4 +1,4 @@
-export async function getUnfollowers() {
+export async function getUnfollowers(notifyProgress: (value: string) => void) {
   const results: Node[] = [];
   let scrollCycle = 0;
   let url = urlGenerator();
@@ -26,6 +26,7 @@ export async function getUnfollowers() {
       hasNext = receivedData.page_info.has_next_page;
       url = urlGenerator(receivedData.page_info.end_cursor);
       currentFollowedUsersCount += receivedData.edges.length;
+      notifyProgress(`${currentFollowedUsersCount}/${totalFollowedUsersCount}`);
       receivedData.edges.forEach(x => results.push(x.node));
 
       await sleep(Math.floor(Math.random() * (1000 - 600)) + 1000);

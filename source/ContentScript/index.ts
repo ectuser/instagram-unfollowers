@@ -2,9 +2,13 @@ import { browser } from 'webextension-polyfill-ts';
 import { getUnfollowers } from './unfollowers';
 import { getFollowers } from './followers';
 
-browser.runtime.onMessage.addListener((request, sender) => {
+browser.runtime.onMessage.addListener((request) => {
   if( request.message === 'fetch' ) {
-    getUnfollowers()
+    const notifyProgress = (value: string) => {
+      browser.runtime.sendMessage({type: 'fetch-progress', message: value})
+    };
+
+    getUnfollowers(notifyProgress)
       .then(result => {
         console.log('send message');
         
@@ -25,11 +29,15 @@ browser.runtime.onMessage.addListener((request, sender) => {
       return;
     }
 
-    getFollowers(appId)
+    const notify = (numberOfUsers: number) => {
+      browser.runtime.sendMessage({type: 'fetch-followers-progress', message: numberOfUsers});
+    };
+
+    getFollowers(appId, notify)
       .then(result => {
         console.log('send message');
         
-        browser.runtime.sendMessage({type: 'fetch-followers-result', message: result})
+        browser.runtime.sendMessage({type: 'fetch-followers-result', message: result});
       })
       .catch(() => {});
   }

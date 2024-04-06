@@ -10,6 +10,8 @@ const Popup: React.FC = () => {
 
   return <section id="popup">
     <TabsContent tab={tab} tabClicked={(selectedTab) => setTab(selectedTab)} />
+    <br />
+    <br />
     <TabBody tab={tab} />
   </section>;
 };

@@ -4,6 +4,7 @@ import { StorageKeys, sendMessage } from './util';
 import { HistoryStorage, UserStorage } from './storage';
 import { HistoryAccordion } from './HistoryAccordion';
 import { getUserLink } from '../ContentScript/unfollowers';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 type User = {
   name: string;
@@ -35,6 +36,8 @@ export type UsersHistory = {
 export function Followers() {
   const [users, setUsers] = React.useState<UserStorage[]>([]);
   const [history, setHistory] = React.useState<HistoryStorage | undefined>(undefined);
+  const [loading, setLoading] = React.useState(false);
+  const [numberOfUsers, setNumberOfUsers] = React.useState<number | undefined>(undefined);
   const mounted = React.useRef(false);
 
   const historyArr: ChangedHistory[] = React.useMemo(() => {
@@ -158,11 +161,18 @@ export function Followers() {
         processHistory(currentFollowers)
 
         browser.runtime.onMessage.removeListener(func);
+        setLoading(false);
+        setNumberOfUsers(undefined);
+      }
+
+      if (message.type === 'fetch-followers-progress') {
+        setNumberOfUsers(message.message);
       }
     };
 
     browser.runtime.onMessage.addListener(func);
 
+    setLoading(true);
     await sendMessage({message: 'fetch-followers'});
   };
 
@@ -213,13 +223,28 @@ export function Followers() {
     });
   };
 
-  return <div>
-    <button onClick={trackFollowers}>Track followers</button>
+  const parentRef = React.useRef(null);
+  const virtualizer = useVirtualizer({
+    count: usersHistory.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 45,
+  });
+
+  return <div ref={parentRef}>
+    <button onClick={trackFollowers} aria-busy={loading} disabled={loading}>
+      {loading ? 'Loading followers. Please wait' : 'Track followers'}
+    </button>
 
     <h1>History of followers</h1>
 
-    <div style={{display: 'flex', flexDirection: 'column', gap: 2}}>{usersHistory.map(h => 
-      <HistoryAccordion history={h} key={h.dt} />)}
+    {loading 
+    ? <>
+      <h4 style={{paddingTop: 20, paddingBottom: 20}}>Loaded {numberOfUsers} followers</h4>
+    </>
+    : null}
+
+    <div style={{display: 'flex', flexDirection: 'column', gap: 2}}>{virtualizer.getVirtualItems().map((virtualRow) => 
+      <HistoryAccordion history={usersHistory[virtualRow.index]} key={virtualRow.key} />)}
     </div>
   </div>;
 }

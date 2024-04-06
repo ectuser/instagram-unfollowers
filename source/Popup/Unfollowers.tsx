@@ -4,6 +4,7 @@ import { StorageKeys, sendMessage } from './util';
 
 import { browser } from 'webextension-polyfill-ts';
 import { compressToEncodedURIComponent } from 'lz-string';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 type User = {
   name: string;
@@ -16,6 +17,8 @@ type User = {
 export function Unfollowers() {
   const [users, setUsers] = React.useState<User[]>([]);
   const [images, setImages] = React.useState<(Blob | undefined)[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [progress, setProgress] = React.useState<string | undefined>(undefined);
 
   const link = React.useMemo(() => {
 
@@ -99,11 +102,16 @@ export function Unfollowers() {
         });
 
         browser.runtime.onMessage.removeListener(func);
+
+        setLoading(false);
+      } else if (message.type === 'fetch-progress') {
+        setProgress(message.message);
       }
     };
 
     browser.runtime.onMessage.addListener(func);
 
+    setLoading(true);
     await sendMessage({message: 'fetch'});
   };
 
@@ -116,17 +124,26 @@ export function Unfollowers() {
     setUsers([]);
   };
 
-  return <div>
+  const parentRef = React.useRef(null);
+  const virtualizer = useVirtualizer({
+    count: users.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 45,
+  });
+
+  return <div ref={parentRef}>
     <h1>Number of users: {users.length}</h1>
 
     <div style={{display: 'flex', gap: '8px'}}>
-      <button onClick={run}>Search / Refresh</button>
-      <button onClick={clearCache}>Clear cache</button>
+      <button onClick={run} disabled={loading} aria-busy={loading}>Search / Refresh</button>
+      <button onClick={clearCache} disabled={loading} aria-busy={loading}>Clear cache</button>
     </div>
 
     <div style={{paddingTop: 20}}>
-      {users.length ? <button onClick={copy}>Copy link to view on mobile phone</button> : null}
+      {users.length ? <button onClick={copy}>Copy link</button> : null}
     </div>
+
+    {loading && progress ? <h4 style={{paddingTop: 20, paddingBottom: 20}}>Current progress: {progress}</h4> : null}
 
     <table style={{paddingTop: 20}}>
       <thead>
@@ -138,21 +155,20 @@ export function Unfollowers() {
         </tr> 
       </thead>
       <tbody>
-        {users.map((user, index) => 
-          <tr key={user.id}>
+        {virtualizer.getVirtualItems().map((virtualRow) => 
+          <tr key={virtualRow.key}>
             <td>
-              {images[index] 
+              {images[virtualRow.index] 
                 ? <span>
-                  <span>{index}</span>
-                  <img src={URL.createObjectURL(images[index]!)} alt="" width={100} height={100} /> 
+                  <img src={URL.createObjectURL(images[virtualRow.index]!)} alt={users[virtualRow.index].username} width="500" height="500" /> 
                 </span>
                 : null
               }
             </td>
-            <td>{user.username}</td>
-            <td>{user.name}</td>
+            <td>{users[virtualRow.index].username}</td>
+            <td>{users[virtualRow.index].name}</td>
             <td>
-              <a onClick={() => profileClicked(user.link)} href='#'>Profile</a>
+              <a onClick={() => profileClicked(users[virtualRow.index].link)} href='#'>Profile</a>
             </td>
           </tr>
         )}

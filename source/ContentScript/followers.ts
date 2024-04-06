@@ -17,7 +17,7 @@ type Follower = {
   latest_reel_media: number
 };
 
-export async function getFollowers(appId: string) {  
+export async function getFollowers(appId: string, notifyProgress: (numberOfUsers: number) => void) {  
   const results: Follower[] = [];
   let scrollCycle = 0;
   let url = followersUrlGenerator();
@@ -41,6 +41,7 @@ export async function getFollowers(appId: string) {
       }
 
       numberOfUsers += receivedData.page_size;
+      notifyProgress(numberOfUsers);
       hasNext = !!receivedData.next_max_id;
       url = followersUrlGenerator(receivedData.next_max_id);
 
