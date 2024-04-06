@@ -1,5 +1,11 @@
 import { browser } from 'webextension-polyfill-ts';
 
+export enum StorageKeys {
+  Unfollowers = 'unfollowers',
+  Users = 'users',
+  History = 'history',
+};
+
 export async function sendMessage(message: any, tabId?: number) {
   if (tabId !== undefined) {
     return _sendMessage(tabId, message);
