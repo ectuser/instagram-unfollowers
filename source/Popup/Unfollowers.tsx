@@ -5,6 +5,7 @@ import { StorageKeys, sendMessage } from './util';
 import { browser } from 'webextension-polyfill-ts';
 import { compressToEncodedURIComponent } from 'lz-string';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import toast, { Toaster } from 'react-hot-toast';
 
 type User = {
   name: string;
@@ -19,6 +20,8 @@ export function Unfollowers() {
   const [images, setImages] = React.useState<(Blob | undefined)[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [progress, setProgress] = React.useState<string | undefined>(undefined);
+
+  const notify = (message: string) => toast(message);
 
   const link = React.useMemo(() => {
 
@@ -81,9 +84,9 @@ export function Unfollowers() {
     try {
       await navigator.clipboard.writeText(link);
       
-      alert('Copied');
+      notify('Copied');
     } catch (error) {
-      alert('Could not copy');
+      notify('Could not copy');
     }
   };
 
@@ -104,8 +107,12 @@ export function Unfollowers() {
         browser.runtime.onMessage.removeListener(func);
 
         setLoading(false);
+        notify('Done! There are your unfollowers');
       } else if (message.type === 'fetch-progress') {
         setProgress(message.message);
+      } else if (message.typ === 'fetch-error') {
+        setLoading(false);
+        notify('Error. Could not get unsubscribers.');
       }
     };
 
@@ -132,6 +139,7 @@ export function Unfollowers() {
   });
 
   return <div ref={parentRef}>
+    <Toaster />
     <h1>Number of users: {users.length}</h1>
 
     <div style={{display: 'flex', gap: '8px'}}>

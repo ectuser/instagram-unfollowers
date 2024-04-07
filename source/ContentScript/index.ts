@@ -5,7 +5,7 @@ import { getFollowers } from './followers';
 browser.runtime.onMessage.addListener((request) => {
   if( request.message === 'fetch' ) {
     const notifyProgress = (value: string) => {
-      browser.runtime.sendMessage({type: 'fetch-progress', message: value})
+      browser.runtime.sendMessage({type: 'fetch-progress', message: value});
     };
 
     getUnfollowers(notifyProgress)
@@ -14,18 +14,19 @@ browser.runtime.onMessage.addListener((request) => {
         
         browser.runtime.sendMessage({type: 'fetch-result', message: result})
       })
-      .catch(() => {});
-  } else if( request.message === 'fetch-followers' ) {
+      .catch(() => {
+        browser.runtime.sendMessage({type: 'fetch-error'});
+      });
 
-    
+  } else if( request.message === 'fetch-followers' ) {
     const html = document.documentElement.innerHTML;
 
     const regex = /"APP_ID":"(\d+)"/;
     const appId = html.match(regex)?.at(1);
 
     if (!appId) {
-      console.log('Cannot extract app id');
-      
+      browser.runtime.sendMessage({type: 'fetch-followers-error'});
+
       return;
     }
 
@@ -39,6 +40,8 @@ browser.runtime.onMessage.addListener((request) => {
         
         browser.runtime.sendMessage({type: 'fetch-followers-result', message: result});
       })
-      .catch(() => {});
+      .catch(() => {
+        browser.runtime.sendMessage({type: 'fetch-followers-error'});
+      });
   }
 });

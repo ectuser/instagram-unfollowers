@@ -5,6 +5,7 @@ import { HistoryStorage, UserStorage } from './storage';
 import { HistoryAccordion } from './HistoryAccordion';
 import { getUserLink } from '../ContentScript/unfollowers';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import toast, { Toaster } from 'react-hot-toast';
 
 type User = {
   name: string;
@@ -39,6 +40,8 @@ export function Followers() {
   const [loading, setLoading] = React.useState(false);
   const [numberOfUsers, setNumberOfUsers] = React.useState<number | undefined>(undefined);
   const mounted = React.useRef(false);
+
+  const notify = (message: string) => toast(message);
 
   const historyArr: ChangedHistory[] = React.useMemo(() => {
     console.log(1, history);
@@ -146,7 +149,6 @@ export function Followers() {
     }
   }, []);
 
-
   const trackFollowers = async () => {
     console.log('run');
 
@@ -163,10 +165,17 @@ export function Followers() {
         browser.runtime.onMessage.removeListener(func);
         setLoading(false);
         setNumberOfUsers(undefined);
+        notify('Done! There are your followers!');
       }
 
       if (message.type === 'fetch-followers-progress') {
         setNumberOfUsers(message.message);
+      }
+
+      if (message.type === 'fetch-followers-error') {
+        setLoading(false);
+        setNumberOfUsers(undefined);
+        notify('Error. Could not get followers.');
       }
     };
 
@@ -231,6 +240,7 @@ export function Followers() {
   });
 
   return <div ref={parentRef}>
+    <Toaster />
     <button onClick={trackFollowers} aria-busy={loading} disabled={loading}>
       {loading ? 'Loading followers. Please wait' : 'Track followers'}
     </button>
