@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { browser } from 'webextension-polyfill-ts';
-import { StorageKeys, sendMessage } from './util';
-import { HistoryStorage, UserStorage } from './storage';
-import { HistoryAccordion } from './HistoryAccordion';
-import { getUserLink } from '../ContentScript/unfollowers';
+
 import { useVirtualizer } from '@tanstack/react-virtual';
 import toast, { Toaster } from 'react-hot-toast';
+
+import { sendMessage } from '../util';
+import { HistoryStorage, StorageKeys, UserStorage } from '../../storage/storage';
+import { HistoryAccordion } from './HistoryAccordion';
+import { getUserLink } from '../../ContentScript/unfollowers';
 
 type User = {
   name: string;
@@ -41,12 +43,7 @@ export function Followers() {
   const [numberOfUsers, setNumberOfUsers] = React.useState<number | undefined>(undefined);
   const mounted = React.useRef(false);
 
-  const notify = (message: string) => toast(message);
-
   const historyArr: ChangedHistory[] = React.useMemo(() => {
-    console.log(1, history);
-    
-
     if (history === undefined) {
       return [];
     }
@@ -61,9 +58,6 @@ export function Followers() {
 
       return aDate - bDate;
     });
-
-    console.log(2, allHistory);
-    
 
     const changedHistory: ChangedHistory[] = [];
 
@@ -84,12 +78,8 @@ export function Followers() {
       const minus = a.filter(item => !b.includes(item));
       
       changedHistory.push({dt: currItem.dt, plus, minus});
-      console.log(3, changedHistory);
       
     }
-
-    console.log(changedHistory);
-    
 
     return changedHistory.reverse();
   }, [history]);
@@ -150,11 +140,8 @@ export function Followers() {
   }, []);
 
   const trackFollowers = async () => {
-    console.log('run');
 
     const func = (message: any) => {
-      console.log(message);
-      
       if (message.type === 'fetch-followers-result') {
 
         const currentFollowers: User[] = message.message;
@@ -165,7 +152,7 @@ export function Followers() {
         browser.runtime.onMessage.removeListener(func);
         setLoading(false);
         setNumberOfUsers(undefined);
-        notify('Done! There are your followers!');
+        toast.success('Done! There are your followers!', {duration: 1000});
       }
 
       if (message.type === 'fetch-followers-progress') {
@@ -175,13 +162,15 @@ export function Followers() {
       if (message.type === 'fetch-followers-error') {
         setLoading(false);
         setNumberOfUsers(undefined);
-        notify('Error. Could not get followers.');
+        toast.error('Error. Could not get followers.', {duration: 1500});
       }
     };
 
     browser.runtime.onMessage.addListener(func);
 
     setLoading(true);
+    toast.loading('Start loading followers', {duration: 1500});
+    
     await sendMessage({message: 'fetch-followers'});
   };
 
@@ -199,15 +188,12 @@ export function Followers() {
     }));
 
     const usersToStore: UserStorage[] = [...users, ...storageMissingUsers];
-    
-    console.log({storageMissingUsers, usersToStore, users});
-    
 
     setUsers(usersToStore);
 
-    browser.storage.local.set({
-      [StorageKeys.Users]: usersToStore,
-    });
+    // browser.storage.local.set({
+    //   [StorageKeys.Users]: usersToStore,
+    // });
   };
 
   const processHistory = (currentFollowers: User[]) => {
@@ -222,14 +208,11 @@ export function Followers() {
       ...newHistoryObj
     };
 
-    console.log(historyToStore);
-    
-
     setHistory(historyToStore);
 
-    browser.storage.local.set({
-      [StorageKeys.History]: historyToStore,
-    });
+    // browser.storage.local.set({
+    //   [StorageKeys.History]: historyToStore,
+    // });
   };
 
   const parentRef = React.useRef(null);

@@ -1,3 +1,10 @@
+export enum StorageKeys {
+  Unfollowers = 'unfollowers',
+  Users = 'users',
+  History = 'history',
+  Loading = 'loading',
+};
+
 export type UserStorage = {
   id: string,
   username: string,

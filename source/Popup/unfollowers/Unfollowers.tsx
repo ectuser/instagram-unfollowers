@@ -1,11 +1,12 @@
 import * as React from 'react';
 
-import { StorageKeys, sendMessage } from './util';
-
 import { browser } from 'webextension-polyfill-ts';
 import { compressToEncodedURIComponent } from 'lz-string';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import toast, { Toaster } from 'react-hot-toast';
+
+import { sendMessage } from '../util';
+import { StorageKeys } from '../../storage/storage';
 
 type User = {
   name: string;
@@ -21,8 +22,6 @@ export function Unfollowers() {
   const [loading, setLoading] = React.useState(false);
   const [progress, setProgress] = React.useState<string | undefined>(undefined);
 
-  const notify = (message: string) => toast(message);
-
   const link = React.useMemo(() => {
 
     const stringifiedParams = JSON.stringify(users.map(user => ({
@@ -32,15 +31,7 @@ export function Unfollowers() {
       link: user.link,
     })));
 
-    console.log('initial:', stringifiedParams.length);
-    
-
     const compressed = compressToEncodedURIComponent(stringifiedParams);
-
-    console.log(compressed);
-    
-
-    console.log('compressed:', compressed.length);
 
     const params = new URLSearchParams({
       params: compressed,
@@ -84,18 +75,15 @@ export function Unfollowers() {
     try {
       await navigator.clipboard.writeText(link);
       
-      notify('Copied');
+      toast.success('Copied', {duration: 1000});
     } catch (error) {
-      notify('Could not copy');
+      toast.error('Could not copy', {duration: 1000});
     }
   };
 
   const run = async () => {
-    console.log('run');
 
     const func = (message: any) => {
-      console.log(message);
-      
       if (message.type === 'fetch-result') {
 
         setUsers(message.message);
@@ -107,18 +95,19 @@ export function Unfollowers() {
         browser.runtime.onMessage.removeListener(func);
 
         setLoading(false);
-        notify('Done! There are your unfollowers');
+        toast.success('Done! There are your unfollowers', {duration: 1000});
       } else if (message.type === 'fetch-progress') {
         setProgress(message.message);
       } else if (message.typ === 'fetch-error') {
         setLoading(false);
-        notify('Error. Could not get unsubscribers.');
+        toast.error('Error. Could not get unsubscribers.', {duration: 1500});
       }
     };
 
     browser.runtime.onMessage.addListener(func);
 
     setLoading(true);
+    toast.loading('Start loading unfollowers', {duration: 1500});
     await sendMessage({message: 'fetch'});
   };
 

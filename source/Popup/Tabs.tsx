@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Unfollowers } from './Unfollowers';
-import { Followers } from './Followers';
+import { Unfollowers } from './unfollowers/Unfollowers';
+import { Followers } from './followers/Followers';
 import { AvailableTabs } from './Popup';
 
 
