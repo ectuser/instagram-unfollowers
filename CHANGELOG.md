@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.3](https://github.com/ectuser/instagram-unfollowers/compare/v0.0.2...v0.0.3) (2024-04-07)
+
+
+### Features
+
+* add feature to enable functionality only on instagram page ([ec48662](https://github.com/ectuser/instagram-unfollowers/commit/ec486628b55d99ba1ed6d62cf5e5594f0eb57d08))
+* add toast ([fb54b4c](https://github.com/ectuser/instagram-unfollowers/commit/fb54b4c05bf4f1d50dc2b471fc7ed5b778e4bd75))
+
 ### [0.0.2](https://github.com/ectuser/instagram-unfollowers/compare/v0.0.1...v0.0.2) (2024-04-06)
 
 ### 0.0.1 (2024-04-06)
