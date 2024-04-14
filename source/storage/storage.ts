@@ -1,8 +1,11 @@
 export enum StorageKeys {
   Unfollowers = 'unfollowers',
+  LoadingUnfollowers = 'loading-unfollowers',
+  UnfollowersTimeFetched = 'unfollowers-time-fetched',
+
   Users = 'users',
   History = 'history',
-  Loading = 'loading',
+  LoadingFollowers = 'loading-followers',
 };
 
 export type UserStorage = {

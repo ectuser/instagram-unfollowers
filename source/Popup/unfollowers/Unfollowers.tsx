@@ -1,78 +1,26 @@
 import * as React from 'react';
 
 import { browser } from 'webextension-polyfill-ts';
-import { compressToEncodedURIComponent } from 'lz-string';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import toast, { Toaster } from 'react-hot-toast';
 
-import { sendMessage } from '../util';
+import { notInstagramText, sendMessage } from '../util';
+import { InstagramPageContext, useInstagramPage } from '../detect-page';
+import { useUnfollowers } from './useUnfollowers';
+import { generateLinkFromUsers } from '../../util';
 import { StorageKeys } from '../../storage/storage';
-
-type User = {
-  name: string;
-  username: string;
-  link: string;
-  icon: string;
-  id: string,
-};
+import { useStorage } from '../storage-manager';
 
 export function Unfollowers() {
-  const [users, setUsers] = React.useState<User[]>([]);
-  const [images, setImages] = React.useState<(Blob | undefined)[]>([]);
-  const [loading, setLoading] = React.useState(false);
+  const isInstagramPage = true;
+  const {images, users, timeFetched} = useUnfollowers();
+  const [loading] = useStorage<boolean | undefined>(StorageKeys.LoadingUnfollowers);
   const [progress, setProgress] = React.useState<string | undefined>(undefined);
-
-  const link = React.useMemo(() => {
-
-    const stringifiedParams = JSON.stringify(users.map(user => ({
-      name: user.name,
-      username: user.username,
-      id: user.id,
-      link: user.link,
-    })));
-
-    const compressed = compressToEncodedURIComponent(stringifiedParams);
-
-    const params = new URLSearchParams({
-      params: compressed,
-    }).toString();
-
-    return `https://ectuser.github.io/instagram-unfollowers-client/?${params}`
-  }, [users]);
-
-  const mounted = React.useRef(false);
-
-  React.useEffect(() => {
-    if (!mounted?.current) {
-
-      browser.storage.local.get(StorageKeys.Unfollowers).then(result => {
-        const users = result[StorageKeys.Unfollowers];
-
-        if (users) {
-          setUsers(users);
-        }
-      })
-
-      mounted.current = true;
-    }
-  }, []);
-
-  React.useEffect(() => {
-    Promise.allSettled(
-      users.map(user => fetch(user.icon).then(res => res.blob()))
-    ).then(res => res.map(data => {
-      if (data.status === 'fulfilled') {
-        return data.value;
-      }
-
-      return undefined;
-    })).then(transformed => {
-      setImages(transformed);
-    });
-  }, [users]);
 
   const copy = async () => {
     try {
+      const link = generateLinkFromUsers(users);
+
       await navigator.clipboard.writeText(link);
       
       toast.success('Copied', {duration: 1000});
@@ -81,43 +29,42 @@ export function Unfollowers() {
     }
   };
 
+  const isButtonEnabled = () => {
+    return isInstagramPage && !loading;
+  };
+
   const run = async () => {
 
-    const func = (message: any) => {
+    if (!isButtonEnabled()) {
+      if (!isInstagramPage) {
+        toast.error(notInstagramText, {duration: 2500});
+      }
+      return;
+    }
+
+    const func = (message: {type: string, message: any}) => {
       if (message.type === 'fetch-result') {
-
-        setUsers(message.message);
-
-        browser.storage.local.set({
-          [StorageKeys.Unfollowers]: message.message
-        });
 
         browser.runtime.onMessage.removeListener(func);
 
-        setLoading(false);
         toast.success('Done! There are your unfollowers', {duration: 1000});
       } else if (message.type === 'fetch-progress') {
         setProgress(message.message);
-      } else if (message.typ === 'fetch-error') {
-        setLoading(false);
+      } else if (message.type === 'fetch-error') {
         toast.error('Error. Could not get unsubscribers.', {duration: 1500});
       }
     };
 
     browser.runtime.onMessage.addListener(func);
-
-    setLoading(true);
+    
     toast.loading('Start loading unfollowers', {duration: 1500});
-    await sendMessage({message: 'fetch'});
+
+    browser.runtime.sendMessage({type: 'fetch'});
+    await sendMessage({type: 'fetch'});
   };
 
   const profileClicked = (link: string) => {
     browser.tabs.create({url: link});
-  };
-
-  const clearCache = () => {
-    browser.storage.local.remove(StorageKeys.Unfollowers);
-    setUsers([]);
   };
 
   const parentRef = React.useRef(null);
@@ -130,11 +77,9 @@ export function Unfollowers() {
   return <div ref={parentRef}>
     <Toaster />
     <h1>Number of users: {users.length}</h1>
+    {timeFetched ? <div style={{paddingBottom: 20}}>Last time sync: {timeFetched}</div> : null}
 
-    <div style={{display: 'flex', gap: '8px'}}>
-      <button onClick={run} disabled={loading} aria-busy={loading}>Search / Refresh</button>
-      <button onClick={clearCache} disabled={loading} aria-busy={loading}>Clear cache</button>
-    </div>
+    <button onClick={run} aria-busy={loading}>Search / Refresh</button>
 
     <div style={{paddingTop: 20}}>
       {users.length ? <button onClick={copy}>Copy link</button> : null}
@@ -156,7 +101,7 @@ export function Unfollowers() {
             <td>
               {images[virtualRow.index] 
                 ? <span>
-                  <img style={{maxWidth: 'none', width: 50, height: 50}} src={URL.createObjectURL(images[virtualRow.index]!)} alt={users[virtualRow.index].username}/> 
+                  <img style={{maxWidth: 'none', width: 50, height: 50, borderRadius: 50}} src={URL.createObjectURL(images[virtualRow.index]!)} alt={users[virtualRow.index].username}/> 
                 </span>
                 : null
               }

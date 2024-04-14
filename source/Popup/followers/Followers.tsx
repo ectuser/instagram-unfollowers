@@ -4,12 +4,14 @@ import { browser } from 'webextension-polyfill-ts';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import toast, { Toaster } from 'react-hot-toast';
 
-import { sendMessage } from '../util';
+import { notInstagramText, sendMessage } from '../util';
 import { HistoryStorage, StorageKeys, UserStorage } from '../../storage/storage';
 import { HistoryAccordion } from './HistoryAccordion';
 import { getUserLink } from '../../ContentScript/unfollowers';
+import { InstagramPageContext } from '../detect-page';
+import { useStorage } from '../storage-manager';
 
-type User = {
+export type FollowerUser = {
   name: string;
   username: string;
   link: string;
@@ -37,9 +39,11 @@ export type UsersHistory = {
 };
 
 export function Followers() {
+  const isInstagramPage = true;
+  
+  const [loading] = useStorage<boolean | undefined>(StorageKeys.LoadingFollowers);
   const [users, setUsers] = React.useState<UserStorage[]>([]);
   const [history, setHistory] = React.useState<HistoryStorage | undefined>(undefined);
-  const [loading, setLoading] = React.useState(false);
   const [numberOfUsers, setNumberOfUsers] = React.useState<number | undefined>(undefined);
   const mounted = React.useRef(false);
 
@@ -139,18 +143,25 @@ export function Followers() {
     }
   }, []);
 
+  const buttonEnabled = () => {
+    return !loading && isInstagramPage;
+  }
+
   const trackFollowers = async () => {
+
+    if (!buttonEnabled()) {
+      if (!isInstagramPage) {
+        toast.error(notInstagramText, {duration: 2500});
+      } else if (loading) {
+        toast.error('Currently loading', {duration: 2500});
+      }
+
+      return;
+    }
 
     const func = (message: any) => {
       if (message.type === 'fetch-followers-result') {
-
-        const currentFollowers: User[] = message.message;
-
-        processUsers(currentFollowers);
-        processHistory(currentFollowers)
-
         browser.runtime.onMessage.removeListener(func);
-        setLoading(false);
         setNumberOfUsers(undefined);
         toast.success('Done! There are your followers!', {duration: 1000});
       }
@@ -160,7 +171,6 @@ export function Followers() {
       }
 
       if (message.type === 'fetch-followers-error') {
-        setLoading(false);
         setNumberOfUsers(undefined);
         toast.error('Error. Could not get followers.', {duration: 1500});
       }
@@ -168,51 +178,10 @@ export function Followers() {
 
     browser.runtime.onMessage.addListener(func);
 
-    setLoading(true);
     toast.loading('Start loading followers', {duration: 1500});
     
-    await sendMessage({message: 'fetch-followers'});
-  };
-
-  const processUsers = (currentFollowers: User[]) => {
-    const missingStorageUsers = currentFollowers.filter(f => {
-      const existingUser = users.find(u => u.id === f.id);
-
-      return !existingUser;
-    });
-
-    const storageMissingUsers: UserStorage[] = missingStorageUsers.map(u => ({
-      id: u.id,
-      username: u.username,
-      name: u.name,
-    }));
-
-    const usersToStore: UserStorage[] = [...users, ...storageMissingUsers];
-
-    setUsers(usersToStore);
-
-    // browser.storage.local.set({
-    //   [StorageKeys.Users]: usersToStore,
-    // });
-  };
-
-  const processHistory = (currentFollowers: User[]) => {
-    const dt = new Date().toISOString();
-
-    const ids = currentFollowers.map(f => f.id);
-
-    const newHistoryObj: HistoryStorage = {[dt]: ids};
-
-    const historyToStore = {
-      ...(history ?? {}),
-      ...newHistoryObj
-    };
-
-    setHistory(historyToStore);
-
-    // browser.storage.local.set({
-    //   [StorageKeys.History]: historyToStore,
-    // });
+    browser.runtime.sendMessage({type: 'fetch-followers'});
+    await sendMessage({type: 'fetch-followers'});
   };
 
   const parentRef = React.useRef(null);
@@ -224,11 +193,14 @@ export function Followers() {
 
   return <div ref={parentRef}>
     <Toaster />
-    <button onClick={trackFollowers} aria-busy={loading} disabled={loading}>
-      {loading ? 'Loading followers. Please wait' : 'Track followers'}
+    <button
+      onClick={trackFollowers}
+      aria-busy={loading}
+    >
+      {loading ? 'Loading followers. Please wait...' : 'Track followers'}
     </button>
 
-    <h1>History of followers</h1>
+    <h1 style={{paddingTop: 20}}>History of followers</h1>
 
     {loading 
     ? <>

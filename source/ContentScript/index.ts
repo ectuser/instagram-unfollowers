@@ -2,8 +2,8 @@ import { browser } from 'webextension-polyfill-ts';
 import { getUnfollowers } from './unfollowers';
 import { getFollowers } from './followers';
 
-browser.runtime.onMessage.addListener((request) => {
-  if( request.message === 'fetch' ) {
+browser.runtime.onMessage.addListener(({message, type}: {message: any, type: string}) => {
+  if( type === 'fetch' ) {
     const notifyProgress = (value: string) => {
       browser.runtime.sendMessage({type: 'fetch-progress', message: value});
     };
@@ -12,13 +12,13 @@ browser.runtime.onMessage.addListener((request) => {
       .then(result => {
         console.log('send message');
         
-        browser.runtime.sendMessage({type: 'fetch-result', message: result})
+        browser.runtime.sendMessage({type: 'fetch-result', message: result});
       })
       .catch(() => {
         browser.runtime.sendMessage({type: 'fetch-error'});
       });
 
-  } else if( request.message === 'fetch-followers' ) {
+  } else if( type === 'fetch-followers' ) {
     const html = document.documentElement.innerHTML;
 
     const regex = /"APP_ID":"(\d+)"/;
